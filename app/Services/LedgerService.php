@@ -2,11 +2,13 @@
 
 namespace App\Services;
 
+use App\Enums\CategoryKind;
 use App\Enums\Scope;
 use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\LedgerEntry;
 use App\Models\Transaction;
+use App\Models\TransactionCategory;
 use App\Support\Money;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -76,7 +78,7 @@ final class LedgerService
             $tx->load('entries');
             $old = $this->snapshot($tx);
 
-            $plan = $this->plan(array_merge($this->currentInput($tx), $changes, ['type' => $tx->type]));
+            $plan = $this->plan(array_merge($this->currentInput($tx), $changes, ['type' => $tx->type]), $tx);
 
             $tx->entries()->delete();
             $tx->forceFill(array_merge($plan['attributes'], [
@@ -160,7 +162,7 @@ final class LedgerService
      *
      * @return array{type: TransactionType, scope: Scope, amount: string, date: Carbon, legs: list<array{0: Account, 1: string}>, attributes: array}
      */
-    private function plan(array $input): array
+    private function plan(array $input, ?Transaction $existing = null): array
     {
         $type = $input['type'] instanceof TransactionType
             ? $input['type']
@@ -222,6 +224,16 @@ final class LedgerService
             $legs = [[$source, $sign > 0 ? $amount : Money::sub('0', $amount)]];
         }
 
+        $categoryId = $input['category_id'] ?? null;
+
+        if ($type === TransactionType::Income || $type === TransactionType::Expense) {
+            if ($categoryId !== null) {
+                $this->assertCategory($categoryId, $type, $scope, $existing?->category_id);
+            }
+        } elseif ($categoryId !== null) {
+            throw self::invalid('category_id', 'Categories apply only to income and expenses.');
+        }
+
         return [
             'type' => $type,
             'scope' => $scope,
@@ -230,6 +242,31 @@ final class LedgerService
             'legs' => $legs,
             'attributes' => array_intersect_key($input, array_flip(self::PASSTHROUGH)),
         ];
+    }
+
+    /** An already-used category may be deactivated later; editing such a record must still work. */
+    private function assertCategory(int|string $categoryId, TransactionType $type, Scope $scope, int|string|null $currentCategoryId = null): void
+    {
+        $category = TransactionCategory::query()->find($categoryId)
+            ?? throw self::invalid('category_id', 'Category not found.');
+
+        if (! $category->is_active && (int) $category->id !== (int) $currentCategoryId) {
+            throw self::invalid('category_id', 'This category is inactive.');
+        }
+
+        $expectedKind = $type === TransactionType::Income ? CategoryKind::Income : CategoryKind::Expense;
+
+        if ($category->kind !== $expectedKind) {
+            throw self::invalid('category_id', sprintf('Choose an %s category.', $expectedKind->value));
+        }
+
+        if ($category->scope !== $scope) {
+            throw self::invalid('category_id', sprintf(
+                'This is a %s category but the account is a %s account.',
+                $category->scope->value,
+                $scope->value
+            ));
+        }
     }
 
     private function assertUsable(Account $account, Carbon $date, string $field): void

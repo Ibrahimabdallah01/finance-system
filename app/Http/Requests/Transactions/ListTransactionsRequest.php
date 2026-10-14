@@ -21,6 +21,7 @@ class ListTransactionsRequest extends FormRequest
             'scope' => ['nullable', Rule::enum(Scope::class)],
             'status' => ['nullable', Rule::in(['posted', 'voided'])],
             'account_id' => ['nullable', 'integer'],
+            'category_id' => ['nullable', 'integer'],
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
             'search' => ['nullable', 'string', 'max:100'],

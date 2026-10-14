@@ -17,6 +17,12 @@ class TransactionResource extends JsonResource
             'transaction_date' => $this->transaction_date->toDateString(),
             'amount' => $this->amount,
             'category_id' => $this->category_id,
+            'category' => $this->whenLoaded('category', fn () => $this->category === null ? null : [
+                'id' => $this->category->id,
+                'name' => $this->category->name,
+                'parent_id' => $this->category->parent_id,
+            ]),
+            'receipts_count' => $this->whenCounted('receipts'),
             'sale_id' => $this->sale_id,
             'debt_id' => $this->debt_id,
             'payment_method' => $this->payment_method,

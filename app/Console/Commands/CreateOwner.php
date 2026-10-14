@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\User;
+use App\Services\DefaultCategories;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -56,6 +57,8 @@ class CreateOwner extends Command
             $user->business()->create([
                 'name' => $this->option('business') ?: 'My Phone Business',
             ]);
+
+            app(DefaultCategories::class)->seedFor($user);
         });
 
         $this->info('Owner and business created. You can now log in.');

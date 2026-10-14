@@ -3,8 +3,10 @@
 namespace Tests\Concerns;
 
 use App\Enums\AccountType;
+use App\Enums\CategoryKind;
 use App\Enums\Scope;
 use App\Models\Account;
+use App\Models\TransactionCategory;
 use App\Models\User;
 use Illuminate\Support\Str;
 
@@ -34,6 +36,23 @@ trait CreatesFinanceData
         $account->save();
 
         return $account;
+    }
+
+    protected function makeCategory(User $user, array $attributes = []): TransactionCategory
+    {
+        $category = new TransactionCategory(array_merge([
+            'scope' => Scope::Personal,
+            'kind' => CategoryKind::Expense,
+            'name' => 'Category '.Str::random(8),
+            'is_system' => false,
+            'is_active' => true,
+            'sort_order' => 0,
+        ], $attributes));
+
+        $category->user_id = $user->id;
+        $category->save();
+
+        return $category;
     }
 
     protected function daysAgo(int $days): string
