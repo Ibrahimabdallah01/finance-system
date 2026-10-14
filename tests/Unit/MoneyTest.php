@@ -72,4 +72,27 @@ class MoneyTest extends TestCase
         $this->expectException(TypeError::class);
         Money::add(1.5, '1');
     }
+
+    public function test_from_input_accepts_json_numbers_and_strings_exactly(): void
+    {
+        $this->assertSame('150000.50', Money::fromInput(150000.5));
+        $this->assertSame('100.00', Money::fromInput(100.0));
+        $this->assertSame('12.30', Money::fromInput('12.30'));
+        $this->assertSame('5.00', Money::fromInput(5));
+        $this->assertSame('1234.56', Money::fromInput(1234.56));
+    }
+
+    public function test_from_input_rejects_more_than_two_decimals(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        Money::fromInput(1234.567);
+    }
+
+    public function test_from_database_normalises_decimal_strings(): void
+    {
+        $this->assertSame('0.00', Money::fromDatabase(null));
+        $this->assertSame('1500.00', Money::fromDatabase('1500.0000'));
+        $this->assertSame('7.00', Money::fromDatabase(7));
+        $this->assertSame('-3.50', Money::fromDatabase('-3.5'));
+    }
 }

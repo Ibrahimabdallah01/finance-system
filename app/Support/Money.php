@@ -69,6 +69,43 @@ final class Money
         return bcadd($value, '0', self::SCALE);
     }
 
+    /**
+     * Converts a decoded JSON value (string, int or float) into an exact 2-decimal string.
+     * Boundary use only (request input). Amounts with more than 2 decimals are rejected.
+     */
+    public static function fromInput(string|int|float $value): string
+    {
+        if (is_float($value)) {
+            if (! is_finite($value)) {
+                throw new InvalidArgumentException('Invalid money amount.');
+            }
+
+            $value = rtrim(rtrim(number_format($value, 10, '.', ''), '0'), '.');
+        }
+
+        return self::normalize((string) $value);
+    }
+
+    /** Converts a value read from the database (decimal string, or null for "nothing") to 2 decimals. */
+    public static function fromDatabase(string|int|float|null $value): string
+    {
+        if ($value === null) {
+            return '0.00';
+        }
+
+        if (is_float($value)) {
+            return number_format($value, self::SCALE, '.', '');
+        }
+
+        $value = (string) $value;
+
+        if (! preg_match('/^-?\d+(\.\d+)?$/', $value)) {
+            throw new InvalidArgumentException("Invalid database amount: {$value}");
+        }
+
+        return bcadd($value, '0', self::SCALE);
+    }
+
     /** Display format, e.g. "TSh 150,000" or "TSh 1,234.50". */
     public static function format(string|int $amount, bool $withSymbol = true): string
     {

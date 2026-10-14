@@ -1,7 +1,11 @@
 <?php
 
+use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\ReconciliationController;
+use App\Http\Controllers\Api\TransactionController;
+use App\Http\Controllers\Api\TransferController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', HealthController::class);
@@ -16,7 +20,21 @@ Route::prefix('auth')->group(function () {
     });
 });
 
-// Later phases add their routes inside this group so every endpoint requires a login.
+// Every endpoint below requires a login and only ever sees the logged-in owner's rows.
 Route::middleware('auth:sanctum')->group(function () {
-    //
+    // Accounts and statements
+    Route::get('accounts/{account}/ledger', [AccountController::class, 'ledger']);
+    Route::apiResource('accounts', AccountController::class);
+
+    // Reconciliation
+    Route::get('accounts/{account}/reconciliations', [ReconciliationController::class, 'index']);
+    Route::post('accounts/{account}/reconciliations', [ReconciliationController::class, 'store']);
+
+    // Transactions (all types) and transfers
+    Route::get('transactions', [TransactionController::class, 'index']);
+    Route::get('transactions/{transaction}', [TransactionController::class, 'show']);
+    Route::post('transactions/{transaction}/void', [TransactionController::class, 'void']);
+
+    Route::post('transfers', [TransferController::class, 'store']);
+    Route::put('transfers/{transaction}', [TransferController::class, 'update']);
 });
