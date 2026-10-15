@@ -95,4 +95,19 @@ class MoneyTest extends TestCase
         $this->assertSame('7.00', Money::fromDatabase(7));
         $this->assertSame('-3.50', Money::fromDatabase('-3.5'));
     }
+
+    public function test_division_rounds_half_away_from_zero(): void
+    {
+        $this->assertSame('333.33', Money::div('1000', 3));
+        $this->assertSame('666.67', Money::div('2000', 3));
+        $this->assertSame('2.50', Money::div('10', 4));
+        $this->assertSame('1500.00', Money::div('30000', 20));
+        $this->assertSame('-0.01', Money::div('-0.01', 2));
+    }
+
+    public function test_division_by_zero_is_rejected(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        Money::div('10', 0);
+    }
 }

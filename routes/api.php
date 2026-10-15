@@ -3,10 +3,16 @@
 use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\IncomeExpenseController;
+use App\Http\Controllers\Api\InventoryController;
+use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\ProfitReportController;
 use App\Http\Controllers\Api\ReceiptController;
 use App\Http\Controllers\Api\ReconciliationController;
+use App\Http\Controllers\Api\SaleController;
+use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\TransferController;
 use Illuminate\Support\Facades\Route;
@@ -51,6 +57,32 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('transactions/{transaction}/receipts', [ReceiptController::class, 'store']);
     Route::get('receipts/{receipt}/download', [ReceiptController::class, 'download']);
     Route::delete('receipts/{receipt}', [ReceiptController::class, 'destroy']);
+
+    // Suppliers, customers, products
+    Route::apiResource('suppliers', SupplierController::class);
+    Route::apiResource('customers', CustomerController::class);
+    Route::apiResource('products', ProductController::class)->except(['destroy']);
+
+    // Inventory
+    Route::post('inventory/purchases', [InventoryController::class, 'purchase']);
+    Route::post('inventory/write-offs', [InventoryController::class, 'writeOff']);
+    Route::get('inventory/summary', [InventoryController::class, 'summary']);
+    Route::get('inventory/units', [InventoryController::class, 'units']);
+    Route::get('inventory/units/{unit}', [InventoryController::class, 'showUnit']);
+    Route::put('inventory/units/{unit}', [InventoryController::class, 'updateUnit']);
+
+    // Sales
+    Route::get('sales', [SaleController::class, 'index']);
+    Route::post('sales', [SaleController::class, 'store']);
+    Route::get('sales/{sale}', [SaleController::class, 'show']);
+    Route::post('sales/{sale}/cancel', [SaleController::class, 'cancel']);
+    Route::post('sales/{sale}/payments', [SaleController::class, 'payment']);
+    Route::post('sales/{sale}/refunds', [SaleController::class, 'refund']);
+    Route::post('sales/{sale}/returns', [SaleController::class, 'saleReturn']);
+    Route::post('sales/{sale}/costs', [SaleController::class, 'cost']);
+
+    // Reports
+    Route::get('reports/profit-loss', ProfitReportController::class);
 
     // Transfers between own accounts
     Route::post('transfers', [TransferController::class, 'store']);

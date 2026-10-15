@@ -51,6 +51,20 @@ final class Money
         return bcadd($product, str_starts_with($product, '-') ? '-0.005' : '0.005', self::SCALE);
     }
 
+    /** Divide by a quantity or count. The result is rounded half away from zero to 2 decimals. */
+    public static function div(string|int $amount, string|int $divisor): string
+    {
+        $divisor = (string) $divisor;
+
+        if (! preg_match('/^\d+(\.\d{1,8})?$/', $divisor) || bccomp($divisor, '0', 8) === 0) {
+            throw new InvalidArgumentException("Invalid divisor: {$divisor}");
+        }
+
+        $quotient = bcdiv(self::normalize($amount), $divisor, 10);
+
+        return bcadd($quotient, str_starts_with($quotient, '-') ? '-0.005' : '0.005', self::SCALE);
+    }
+
     /** Returns -1, 0 or 1. */
     public static function compare(string|int $a, string|int $b): int
     {

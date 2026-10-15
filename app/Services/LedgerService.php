@@ -6,6 +6,8 @@ use App\Enums\CategoryKind;
 use App\Enums\Scope;
 use App\Enums\TransactionType;
 use App\Models\Account;
+use App\Models\InventoryMovement;
+use App\Models\InventoryUnit;
 use App\Models\LedgerEntry;
 use App\Models\Transaction;
 use App\Models\TransactionCategory;
@@ -105,6 +107,13 @@ final class LedgerService
 
             if ($tx->isVoided()) {
                 throw self::invalid('transaction', 'This transaction is already voided.');
+            }
+
+            if ($tx->type === TransactionType::InventoryPurchase
+                && ($tx->sale_id !== null
+                    || InventoryUnit::query()->where('purchase_transaction_id', $tx->id)->exists()
+                    || InventoryMovement::query()->where('transaction_id', $tx->id)->exists())) {
+                throw self::invalid('transaction', 'This payment is tied to stock or a sale. Return the stock, write it off, or cancel the sale instead of voiding the payment.');
             }
 
             $old = $this->snapshot($tx);
