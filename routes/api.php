@@ -2,8 +2,11 @@
 
 use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BudgetController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\DebtController;
+use App\Http\Controllers\Api\DebtReportController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\IncomeExpenseController;
 use App\Http\Controllers\Api\InventoryController;
@@ -12,6 +15,7 @@ use App\Http\Controllers\Api\ProfitReportController;
 use App\Http\Controllers\Api\ReceiptController;
 use App\Http\Controllers\Api\ReconciliationController;
 use App\Http\Controllers\Api\SaleController;
+use App\Http\Controllers\Api\SavingsGoalController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\TransferController;
@@ -80,6 +84,25 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('sales/{sale}/refunds', [SaleController::class, 'refund']);
     Route::post('sales/{sale}/returns', [SaleController::class, 'saleReturn']);
     Route::post('sales/{sale}/costs', [SaleController::class, 'cost']);
+
+    // Budgets
+    Route::get('budgets/{budget}/history', [BudgetController::class, 'history']);
+    Route::apiResource('budgets', BudgetController::class);
+
+    // Savings goals
+    Route::apiResource('savings-goals', SavingsGoalController::class)->parameters(['savings-goals' => 'goal']);
+    Route::post('savings-goals/{goal}/contributions', [SavingsGoalController::class, 'contribute']);
+    Route::post('savings-goals/{goal}/withdrawals', [SavingsGoalController::class, 'withdraw']);
+
+    // Debts, receivables and payables
+    Route::get('debts/summary', [DebtReportController::class, 'summary']);
+    Route::get('receivables', [DebtReportController::class, 'receivables']);
+    Route::get('debts', [DebtController::class, 'index']);
+    Route::post('debts', [DebtController::class, 'store']);
+    Route::get('debts/{debt}', [DebtController::class, 'show']);
+    Route::post('debts/{debt}/repayments', [DebtController::class, 'repay']);
+    Route::post('debts/{debt}/write-off', [DebtController::class, 'writeOff']);
+    Route::put('debts/{debt}/schedule', [DebtController::class, 'schedule']);
 
     // Reports
     Route::get('reports/profit-loss', ProfitReportController::class);

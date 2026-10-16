@@ -116,6 +116,14 @@ final class LedgerService
                 throw self::invalid('transaction', 'This payment is tied to stock or a sale. Return the stock, write it off, or cancel the sale instead of voiding the payment.');
             }
 
+            if (in_array($tx->type, [TransactionType::LoanReceived, TransactionType::LoanGiven], true)
+                && $tx->debt_id !== null
+                && Transaction::query()->where('debt_id', $tx->debt_id)->where('status', 'posted')
+                    ->whereIn('type', [TransactionType::DebtRepaymentIn->value, TransactionType::DebtRepaymentOut->value])
+                    ->exists()) {
+                throw self::invalid('transaction', 'This loan has repayments. Void the repayments first.');
+            }
+
             $old = $this->snapshot($tx);
 
             $tx->forceFill([

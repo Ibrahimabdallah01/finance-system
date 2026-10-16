@@ -10,6 +10,7 @@ use App\Http\Requests\Transactions\UpdateIncomeExpenseRequest;
 use App\Http\Resources\TransactionResource;
 use App\Models\Account;
 use App\Models\Transaction;
+use App\Services\BudgetService;
 use App\Services\LedgerService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
@@ -21,8 +22,10 @@ use Illuminate\Validation\ValidationException;
  */
 class IncomeExpenseController extends Controller
 {
-    public function __construct(private readonly LedgerService $ledger)
-    {
+    public function __construct(
+        private readonly LedgerService $ledger,
+        private readonly BudgetService $budgets,
+    ) {
     }
 
     public function storeIncome(StoreIncomeExpenseRequest $request): JsonResponse
@@ -85,8 +88,13 @@ class IncomeExpenseController extends Controller
             ? $this->ledger->negativeBalanceWarnings([$accountId])
             : [];
 
-        return (new TransactionResource($transaction->load('category:id,name,parent_id')))
-            ->additional(['meta' => ['warnings' => $warnings]])
+        $transaction->load('category:id,name,parent_id');
+
+        return (new TransactionResource($transaction))
+            ->additional(['meta' => [
+                'warnings' => $warnings,
+                'budget_warnings' => $this->budgets->warningsFor($transaction),
+            ]])
             ->response()
             ->setStatusCode($status);
     }
