@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BudgetController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DebtController;
 use App\Http\Controllers\Api\DebtReportController;
 use App\Http\Controllers\Api\HealthController;
@@ -103,6 +104,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('debts/{debt}/repayments', [DebtController::class, 'repay']);
     Route::post('debts/{debt}/write-off', [DebtController::class, 'writeOff']);
     Route::put('debts/{debt}/schedule', [DebtController::class, 'schedule']);
+
+    // Dashboard
+    Route::get('dashboard', DashboardController::class);
 
     // Reports
     Route::get('reports/profit-loss', ProfitReportController::class);
